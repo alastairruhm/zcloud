@@ -19,7 +19,7 @@ var VersionCmd = &cobra.Command{
 }
 
 func printVersion(cmd *cobra.Command, args []string) {
-	cmd.Println("zcloud client tool version ", VERSION)
+	cmd.Println("zcloud client tool version", VERSION)
 }
 
 func init() {
