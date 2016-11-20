@@ -10,8 +10,8 @@ import (
 
 // ServerCmd sub-command of zcloud about server
 var ServerCmd = &cobra.Command{
-	Use:   "server [string to echo]",
-	Short: "Echo anything to the screen",
+	Use:   "server",
+	Short: "operation about server",
 	Long: `echo is for echoing anything back.
     Echo echo’s.
     `,

@@ -8,11 +8,11 @@ import (
 
 // RootCmd the cobra root command
 var RootCmd = &cobra.Command{
-	Use:   "zcloud CLI tool",
-	Short: "Short description",
-	Long: `Longer description.. 
-            feel free to use a few lines here.
-            `,
+	Use:   "zcloud",
+	Short: "a CLI app for openstack client",
+	Long: `zcloud is a CLI app for openstack client.
+This application is created for speeding up the daily operation on cloud servers on openstack
+`,
 }
 
 var (
@@ -35,7 +35,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	RootCmd.PersistentFlags().StringVarP(&Host, "host", "", "", "openstack auth service host")
 	RootCmd.MarkPersistentFlagRequired("host")
-	RootCmd.PersistentFlags().StringVarP(&Username, "username", "", "", "openstack use's name")
-	RootCmd.PersistentFlags().StringVarP(&Password, "password", "", "", "openstack use's name")
+	RootCmd.PersistentFlags().StringVarP(&Username, "username", "", "", "openstack user's name")
+	RootCmd.PersistentFlags().StringVarP(&Password, "password", "", "", "openstack user's name")
 	RootCmd.AddCommand(ServerCmd)
 }

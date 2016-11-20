@@ -8,7 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/pagination"
 )
 
-// OpenstackClient represents as it names
+// OpenstackClient is the client of openstack service
 type OpenstackClient struct {
 	host       string
 	username   string
@@ -66,4 +66,18 @@ func (o *OpenstackClient) ServerList(opts servers.ListOpts) ([]servers.Server, e
 		return true, nil
 	})
 	return serverListResult, err
+}
+
+// ServerCreate create the server with provided options
+func (o *OpenstackClient) ServerCreate(opts servers.CreateOpts) (*servers.Server, error) {
+	computeClient, err := o.ComputeClient()
+	var s *servers.Server
+	if err != nil {
+		return s, err
+	}
+	s, err = servers.Create(computeClient, opts).Extract()
+	if err != nil {
+		return s, err
+	}
+	return s, nil
 }

@@ -11,16 +11,15 @@ var (
 
 // VersionCmd show version of zcloud tool
 var VersionCmd = &cobra.Command{
-	Use:   "version [string to echo]",
-	Short: "Echo anything to the screen",
-	Long: `echo is for echoing anything back.
-    Echo echo’s.
+	Use:   "version",
+	Short: "show zcloud version",
+	Long: `
     `,
 	Run: printVersion,
 }
 
 func printVersion(cmd *cobra.Command, args []string) {
-	cmd.Printf("zcloud client tool version %s\n", VERSION)
+	cmd.Println("zcloud client tool version ", VERSION)
 }
 
 func init() {

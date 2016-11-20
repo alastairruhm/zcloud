@@ -7,7 +7,7 @@ command line application for openstack client based on  gophercloud SDK for Open
 Use [`go get`](https://golang.org/cmd/go/#hdr-Download_and_install_packages_and_dependencies) to install and update:
 
 ```sh
-$ go get -u https://github.com/alastairruhm/zcloud
+$ go get -u github.com/alastairruhm/zcloud
 ```
 
 ## Usage
