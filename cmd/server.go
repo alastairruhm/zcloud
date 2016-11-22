@@ -6,6 +6,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 // ServerCmd sub-command of zcloud about server
@@ -27,20 +28,17 @@ var serverListCmd = &cobra.Command{
 }
 
 func serverList(cmd *cobra.Command, args []string) {
-	openstackClient := &OpenstackClient{
-		host:       Host,
-		username:   Username,
-		password:   Password,
-		tenantName: project,
-	}
-	opts := servers.ListOpts{}
-	serverList, err := openstackClient.ServerList(opts)
+	openstackClient, err := NewClient(Host, Username, Password, project)
+	serverList, err := openstackClient.ServerList(servers.ListOpts{})
 	if err != nil {
 		er(err)
 	}
-
+	cmd.Printf("%32s\t%32s\t%s\t%v\t\n", "ID", "Name", "Status", "Networks")
+	cmd.Printf("---------\n")
 	for _, s := range serverList {
-		cmd.Printf("%s\n", s.Name)
+		networks := GetServerNetworkAddr(&s)
+		network := strings.Join(networks, "|")
+		cmd.Printf("%32s\t%32s\t%s\t%v\t\n", s.ID, s.Name, s.Status, network)
 	}
 }
 
