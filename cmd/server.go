@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/alastairruhm/zcloud/cloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/spf13/cobra"
 	"os"
@@ -18,7 +17,8 @@ var ServerCmd = &cobra.Command{
     `,
 }
 
-var serverListCmd = &cobra.Command{
+// ServerListCmd list server in specific project(tenant)
+var ServerListCmd = &cobra.Command{
 	Use:   "list [string to echo]",
 	Short: "Echo anything to the screen",
 	Long: `echo is for echoing anything back.
@@ -28,21 +28,25 @@ var serverListCmd = &cobra.Command{
 }
 
 func serverList(cmd *cobra.Command, args []string) {
-	openstackClient, err := NewClient(Host, Username, Password, project)
+	openstackClient, err := cloud.NewClient(Host, Username, Password, Project)
+	if err != nil {
+		errOutput(cmd, err)
+	}
 	serverList, err := openstackClient.ServerList(servers.ListOpts{})
 	if err != nil {
-		er(err)
+		errOutput(cmd, err)
 	}
-	cmd.Printf("%32s\t%32s\t%s\t%v\t\n", "ID", "Name", "Status", "Networks")
+	cmd.Printf("%32s\t%30s\t%s\t%s\t\n", "ID", "Name", "Status", "Networks")
 	cmd.Printf("---------\n")
 	for _, s := range serverList {
-		networks := GetServerNetworkAddr(&s)
+		networks := cloud.GetServerNetworkAddr(&s)
 		network := strings.Join(networks, "|")
-		cmd.Printf("%32s\t%32s\t%s\t%v\t\n", s.ID, s.Name, s.Status, network)
+		cmd.Printf("%32s\t%30s\t%s\t%v\t\n", s.ID, s.Name, s.Status, network)
 	}
 }
 
-var serverCreateCmd = &cobra.Command{
+// ServerCreateCmd create and boot server with given options
+var ServerCreateCmd = &cobra.Command{
 	Use:   "create [string to echo]",
 	Short: "Echo anything to the screen",
 	Long: `echo is for echoing anything back.
@@ -52,43 +56,31 @@ var serverCreateCmd = &cobra.Command{
 }
 
 func serverCreate(cmd *cobra.Command, args []string) {
-	authOpts := gophercloud.AuthOptions{
-		IdentityEndpoint: "http://" + Host + ":5000/v2.0",
-		Username:         Username,
-		Password:         Password,
-		TenantName:       project,
-	}
-
-	provider, err := openstack.AuthenticatedClient(authOpts)
-
+	openstackClient, err := cloud.NewClient(Host, Username, Password, Project)
 	if err != nil {
-		cmd.Printf("Authentication error: %s", err)
+		errOutput(cmd, err)
 	}
-
-	computeClient, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{
-	// Region: "RegionOne",
-	})
-
+	networkID, err := openstackClient.GetNetworkIDFromName(Network)
 	if err != nil {
-		cmd.Printf("Client init error: %s", err)
+		errOutput(cmd, err)
 	}
-
-	networks := [1]servers.Network{servers.Network{UUID: "66cfd9c4-173d-4322-a0d9-7f226079bc04"}}
-
-	server, err := servers.Create(computeClient, servers.CreateOpts{
-		Name:       name,
-		FlavorName: flavor,
-		ImageName:  "centos-7-1503-minimal[100G]",
-		Networks:   networks[:],
-	}).Extract()
-
-	if err != nil {
-		cmd.Printf("server creation error: %s", err)
+	networks := []servers.Network{servers.Network{UUID: networkID}}
+	opts := servers.CreateOpts{
+		Name:          Name,
+		FlavorName:    Flavor,
+		ImageName:     Image,
+		Networks:      networks[:],
+		ServiceClient: openstackClient.ComputeService,
 	}
-	cmd.Printf("server %s is created", server.Name)
+	if err := openstackClient.ServerCreate(opts); err != nil {
+		cmd.Println("server create action error:", err)
+		os.Exit(-1)
+	}
+	cmd.Printf("server %s is created\n", Name)
 }
 
-var serverDeleteCmd = &cobra.Command{
+// ServerDeleteCmd delete the specific server
+var ServerDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete a specific server",
 	Long: `echo is for echoing anything back.
@@ -98,55 +90,42 @@ var serverDeleteCmd = &cobra.Command{
 }
 
 func serverDelete(cmd *cobra.Command, args []string) {
-	authOpts := gophercloud.AuthOptions{
-		IdentityEndpoint: "http://" + Host + ":5000/v2.0",
-		Username:         Username,
-		Password:         Password,
-		TenantID:         project,
-	}
-
-	provider, err := openstack.AuthenticatedClient(authOpts)
-
+	openstackClient, err := cloud.NewClient(Host, Username, Password, Project)
 	if err != nil {
-		cmd.Printf("Authentication error: %s", err)
-		os.Exit(1)
+		errOutput(cmd, err)
 	}
-	computeClient, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
+	serverID, err := openstackClient.GetServerIDFromName(Name)
 	if err != nil {
-		cmd.Printf("Client init error: %s", err)
-		os.Exit(1)
+		errOutput(cmd, err)
 	}
-	serverID, err := servers.IDFromName(computeClient, name)
+	err = openstackClient.ServerDelete(serverID)
 	if err != nil {
-		cmd.Printf("Get server id err: %s\n", err)
-		os.Exit(1)
+		errOutput(cmd, err)
 	}
-	result := servers.Delete(computeClient, serverID)
-	if result.Err != nil {
-		cmd.Printf("server delelte action error: %v\n", result.Err)
-		os.Exit(1)
-	}
-	cmd.Printf("server %s is deleted\n", name)
+	cmd.Printf("server %s is deleted\n", Name)
 }
 
 var (
-	// server name
-	name string
-	// project name or id
-	project string
-	// network name or id
-	network string
-	// flavor name
-	flavor string
+	// Name of server
+	Name string
+	// Project name or id
+	Project string
+	// Network name or id
+	Network string
+	// Flavor name
+	Flavor string
+	// Image name or id
+	Image string
 )
 
 func init() {
-	ServerCmd.AddCommand(serverCreateCmd)
-	ServerCmd.AddCommand(serverListCmd)
-	ServerCmd.AddCommand(serverDeleteCmd)
-	ServerCmd.PersistentFlags().StringVarP(&name, "name", "n", "", "server name")
-	ServerCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "project name")
-	ServerCmd.PersistentFlags().StringVarP(&network, "network", "", "", "network name")
-	serverCreateCmd.Flags().StringVarP(&flavor, "flavor", "", "", "flavor name")
+	ServerCmd.AddCommand(ServerCreateCmd)
+	ServerCmd.AddCommand(ServerListCmd)
+	ServerCmd.AddCommand(ServerDeleteCmd)
+	ServerCmd.PersistentFlags().StringVarP(&Name, "name", "n", "", "server name")
+	ServerCmd.PersistentFlags().StringVarP(&Project, "project", "p", "", "project name")
+	ServerCreateCmd.Flags().StringVarP(&Flavor, "flavor", "", "", "flavor name")
+	ServerCreateCmd.Flags().StringVarP(&Network, "network", "", "", "network name")
+	ServerCreateCmd.Flags().StringVarP(&Image, "image", "", "", "image name")
 	ServerCmd.MarkPersistentFlagRequired("project")
 }

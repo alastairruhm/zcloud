@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -26,8 +25,8 @@ var (
 	Password string
 )
 
-func er(msg interface{}) {
-	fmt.Println("Error:", msg)
+func errOutput(cmd *cobra.Command, msg interface{}) {
+	cmd.Println("Error:", msg)
 	os.Exit(-1)
 }
 

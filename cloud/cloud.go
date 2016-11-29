@@ -1,10 +1,11 @@
-// Package cmd provides the cobra cmd
-package cmd
+// Package cloud provides openstack cloud function
+package cloud
 
 import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"strings"
 )
 
@@ -19,6 +20,7 @@ type OpenstackClient struct {
 	Password       string
 	TenantName     string
 	ComputeService *gophercloud.ServiceClient
+	NetworkService *gophercloud.ServiceClient
 }
 
 // NewClient create a new client with given parameter
@@ -35,6 +37,10 @@ func NewClient(host string, username string, password string, tenantName string)
 		return nil, err
 	}
 	client.ComputeService, err = openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		return nil, err
+	}
+	client.NetworkService, err = openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{Name: "neutron"})
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +77,7 @@ func (o *OpenstackClient) GetServerNetworkAddr(server *servers.Server) (map[stri
 // GetServerNetworkAddr return network ip of specific server
 func GetServerNetworkAddr(s *servers.Server) []string {
 	var networks []string
-	network = ""
+	network := ""
 	for key := range s.Addresses {
 		var ips []string
 		for _, networkInterface := range s.Addresses[key].([]interface{}) {
@@ -79,7 +85,7 @@ func GetServerNetworkAddr(s *servers.Server) []string {
 				ips = append(ips, networkInterface.(map[string]interface{})["addr"].(string))
 			}
 		}
-		ip := strings.Join(ips, ",")
+		ip := strings.Join(ips, ", ")
 		network = network + key + "=" + ip
 		networks = append(networks, network)
 	}
@@ -87,12 +93,37 @@ func GetServerNetworkAddr(s *servers.Server) []string {
 }
 
 // ServerCreate create the server with provided options
-func (o *OpenstackClient) ServerCreate(opts servers.CreateOpts) (*servers.Server, error) {
-	// computeClient, err := o.ComputeClient()
-	var s *servers.Server
-	s, err := servers.Create(o.ComputeService, opts).Extract()
+func (o *OpenstackClient) ServerCreate(opts servers.CreateOpts) error {
+	_, err := servers.Create(o.ComputeService, opts).Extract()
 	if err != nil {
-		return s, err
+		return err
 	}
-	return s, nil
+	return nil
+}
+
+// GetServerIDFromName get the id of specific server with name input
+func (o *OpenstackClient) GetServerIDFromName(name string) (string, error) {
+	serverID, err := servers.IDFromName(o.ComputeService, name)
+	if err != nil {
+		return "", err
+	}
+	return serverID, nil
+}
+
+// ServerDelete delete the server with id input
+func (o *OpenstackClient) ServerDelete(ID string) error {
+	result := servers.Delete(o.ComputeService, ID)
+	if result.Err != nil {
+		return result.Err
+	}
+	return nil
+}
+
+// GetNetworkIDFromName get the id of specific network with name input
+func (o *OpenstackClient) GetNetworkIDFromName(name string) (string, error) {
+	networkID, err := networks.IDFromName(o.NetworkService, name)
+	if err != nil {
+		return "", err
+	}
+	return networkID, nil
 }
