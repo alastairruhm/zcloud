@@ -1,4 +1,8 @@
-# zcloud [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/alastairruhm/zcloud/blob/master/LICENSE) [![Build Status](https://travis-ci.org/alastairruhm/zcloud.svg?branch=master)](https://travis-ci.org/alastairruhm/zcloud)
+[![Build Status](https://travis-ci.org/alastairruhm/zcloud.svg?branch=master)](https://travis-ci.org/alastairruhm/zcloud) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/alastairruhm/zcloud)](https://goreportcard.com/report/github.com/alastairruhm/zcloud) 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/alastairruhm/zcloud/blob/master/LICENSE) 
+ 
+# zcloud
 
 command line application for openstack client based on  gophercloud SDK for OpenStack
 
