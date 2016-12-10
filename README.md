@@ -18,23 +18,64 @@ $ go get -u github.com/alastairruhm/zcloud
 
 From the commandline, `zcloud` provides the functions as follows.By default, it prints its output to `stdout`.
 
+### overview
+
 ```sh
+$ zcloud --help
+zcloud is a CLI app for openstack client.
+This application is created for speeding up the daily operation on cloud servers on openstack
+
 Usage:
   zcloud [command]
 
 Available Commands:
-  server      Echo anything to the screen
-  version     Echo anything to the screen
+  server      operation about server
+  version     show zcloud version
 
 Flags:
       --host string       openstack auth service host
-      --password string   openstack use's name
-      --username string   openstack use's name
+      --password string   openstack user's name
+      --username string   openstack user's name
   -v, --verbose           verbose output
 
 Use "zcloud [command] --help" for more information about a command.
 ```
 
+### server 
+
+```sh
+$ zcloud help server
+echo is for echoing anything back.
+    Echo echo’s.
+
+Usage:
+  zcloud server [command]
+
+Available Commands:
+  create      Echo anything to the screen
+  delete      delete a specific server
+  list        Echo anything to the screen
+
+Flags:
+  -n, --name string      server name
+  -p, --project string   project name
+
+Global Flags:
+      --host string       openstack auth service host
+      --password string   openstack user's name
+      --username string   openstack user's name
+  -v, --verbose           verbose output
+
+Use "zcloud server [command] --help" for more information about a command.
+
+```
+
+### version
+
+```sh
+$ zcloud version
+zcloud client tool version 0.0.1
+```
 
 ## License
 
